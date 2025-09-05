@@ -19,6 +19,9 @@ rename_map = {
     'sales': 'Sales ($)',
     'cases': 'Cases',
     'cost_per_case': 'Sales/Case ($)',
+    'raw_labor_cost/case_goal': 'Raw Labor Cost/Case Goal ($)',
+    'labor_cost_with_pto/case_goal': 'Labor Cost w/ PTO/Case Goal ($)',
+    'loaded_labor_cost/case_goal': 'Loaded Labor Cost/Case Goal ($)',
     # Enriched columns (only applied if present)
     'raw_labor_cost': 'Raw Labor Cost ($)',
     'raw_labor_hours': 'Raw Labor Hours',
@@ -36,7 +39,8 @@ numeric_columns = [
     'Sales ($)', 'Cases', 'Sales/Case ($)',
     'Raw Labor Cost ($)', 'Raw Labor Hours', 'Cases/Hr',
     'Raw Labor Cost/Case ($)', 'Labor Cost w/ PTO ($)', 'Labor Cost w/ PTO/Case ($)',
-    'Loaded Labor Cost ($)', 'Loaded Labor Cost/Case ($)'
+    'Loaded Labor Cost ($)', 'Loaded Labor Cost/Case ($)', 'Raw Labor Cost/Case Goal ($)',
+    'Labor Cost w/ PTO/Case Goal ($)', 'Loaded Labor Cost/Case Goal ($)'
 ]
 for col in numeric_columns:
     if col in df.columns:
@@ -58,7 +62,9 @@ def apply_column_formatting(ws, header_row=1):
         'Sales ($)', 'Sales/Case ($)',
         'Raw Labor Cost ($)', 'Raw Labor Cost/Case ($)',
         'Labor Cost w/ PTO ($)', 'Labor Cost w/ PTO/Case ($)',
-        'Loaded Labor Cost ($)', 'Loaded Labor Cost/Case ($)'
+        'Loaded Labor Cost ($)', 'Loaded Labor Cost/Case ($)',
+        'Raw Labor Cost/Case Goal ($)', 'Labor Cost w/ PTO/Case Goal ($)',
+        'Loaded Labor Cost/Case Goal ($)'
     }
     comma_headers = {'Cases', 'Raw Labor Hours'}
     decimal_headers = {'Cases/Hr'}
@@ -112,6 +118,8 @@ for wh, group in df.groupby('Warehouse', sort=False):
 
 
 
+
+
 #                           --- Totals sheet ---
 # New behavior: sum totals, then recompute per-case/ratio metrics from those sums.
 if 'Week Start' not in df.columns:
@@ -141,6 +149,24 @@ add_ratio('Cases/Hr', 'Cases', 'Raw Labor Hours')
 add_ratio('Raw Labor Cost/Case ($)', 'Raw Labor Cost ($)', 'Cases')
 add_ratio('Labor Cost w/ PTO/Case ($)', 'Labor Cost w/ PTO ($)', 'Cases')
 add_ratio('Loaded Labor Cost/Case ($)', 'Loaded Labor Cost ($)', 'Cases')
+
+"""
+# NEW: Weighted averages for goal per-case metrics across warehouses
+# (goals are per-case rates, so aggregate using Cases as weights)
+goal_cols = [
+    'Raw Labor Cost/Case Goal ($)',
+    'Labor Cost w/ PTO/Case Goal ($)',
+    'Loaded Labor Cost/Case Goal ($)',
+]
+if 'Cases' in df.columns:
+    for gcol in [c for c in goal_cols if c in df.columns]:
+        tmp = df[['Week Start', 'Cases', gcol]].dropna()
+        if not tmp.empty:
+            tmp = tmp.assign(__wval=tmp['Cases'] * tmp[gcol])
+            wagg = tmp.groupby('Week Start', as_index=False).agg({'__wval': 'sum', 'Cases': 'sum'})
+            wagg[gcol] = wagg['__wval'] / wagg['Cases']
+            agg = agg.merge(wagg[['Week Start', gcol]], on='Week Start', how='left')
+"""
 
 # Preferred column order for the Totals sheet (keep only columns that exist)
 preferred_order = [
