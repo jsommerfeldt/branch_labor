@@ -210,42 +210,52 @@ def calc_fields(df: pd.DataFrame):
     return df
 
 def expand_monthly_kpis_to_weeks(kpi_df: pd.DataFrame) -> pd.DataFrame:
-    # Separate 4-character year-only rows
+    # Keep rows where week_start is a 4-char year string (e.g., "2025") untouched
     year_only_df = kpi_df[kpi_df["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
 
-    # Filter out year-only rows for expansion
+    # Rows with real dates to expand
     date_rows_df = kpi_df[~kpi_df["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
-    print(date_rows_df["week_start"].unique())
+    if date_rows_df.empty:
+        return kpi_df.copy()
 
-    # Convert week_start to datetime.date
+    # Normalize to date for consistent sorting/comparison
     date_rows_df.loc[:, "week_start"] = pd.to_datetime(date_rows_df["week_start"]).dt.date
-
-    # Sort by week_start
     date_rows_df = date_rows_df.sort_values("week_start")
+
     expanded_rows = []
 
-    # Get unique dates
+    # Unique anchor dates to expand from
     unique_dates = sorted(date_rows_df["week_start"].unique())
 
     for i, start_date in enumerate(unique_dates):
-        end_date = unique_dates[i + 1] if i + 1 < len(unique_dates) else start_date + timedelta(days=28)
-        print(end_date)
+        start_ts = pd.Timestamp(start_date)
+
+        if i + 1 < len(unique_dates):
+            # End at the next anchor (exclusive)
+            end_ts = pd.Timestamp(unique_dates[i + 1])
+        else:
+            # Calendar-aware: for the final block, end at the first Sunday of the month AFTER next (exclusive)
+            month_after_next = start_ts + pd.offsets.MonthBegin(2)
+            # First Sunday on/after that date
+            offset_days = (6 - month_after_next.weekday()) % 7  # Monday=0 ... Sunday=6
+            end_ts = month_after_next + pd.Timedelta(days=offset_days)
+
+        # All rows that share this start_date (each will be replicated weekly)
         current_block = date_rows_df[date_rows_df["week_start"] == start_date]
 
-        # Generate weekly dates between start_date and end_date (exclusive)
-        week = pd.to_datetime(start_date)
-        while week < pd.to_datetime(end_date):
+        # Generate weekly starts up to but not including end_ts (exclusive)
+        week = start_ts
+        while week < end_ts:
             for _, row in current_block.iterrows():
-                expanded_row = row.copy()
-                expanded_row["week_start"] = week.date()
-                expanded_rows.append(expanded_row)
-            week += timedelta(days=7)
+                new_row = row.copy()
+                new_row["week_start"] = week.date()
+                expanded_rows.append(new_row)
+            week += pd.Timedelta(days=7)
 
     expanded_df = pd.DataFrame(expanded_rows)
 
-    # Combine expanded weekly rows with year-only rows
+    # Combine expanded weekly rows with untouched year-only rows
     final_df = pd.concat([expanded_df, year_only_df], ignore_index=True)
-
     return final_df
 
 def round_numeric_columns(df: pd.DataFrame, decimals: int = 2) -> pd.DataFrame:
@@ -273,8 +283,6 @@ def main():
 
     # Expand monthly KPIs to weekly
     weekly_KPIs = expand_monthly_kpis_to_weeks(monthly_KPIs)
-    print(weekly_KPIs.head(10))
-    print(weekly_KPIs.tail(10))
 
     # Left join to enrich with payroll fields
     enriched = sales.merge(
@@ -283,10 +291,37 @@ def main():
         on=["week_start", "warehouse"],
         validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
     )
+    print(enriched.head(30))
+    print(enriched.tail(30))
+
+
+
+
+    #                   --- Drop key "2025", Merge on week_start and warehouse, Then add 2025 KPIs back in ---
+    # Keep rows where week_start is a 4-char year string (e.g., "2025") untouched
+    year_only_KPIs = weekly_KPIs[weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
+
+    # Rows with real dates to expand
+    date_rows_KPIs = weekly_KPIs[~weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
+    date_rows_KPIs['week_start'] = pd.to_datetime(date_rows_KPIs['week_start'])
+
+    # Left join to further enrich KPIs
+    further_enriched = enriched.merge(
+        date_rows_KPIs,
+        how="left",
+        on=["week_start", "warehouse"],
+        validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
+    )
+    print("\n\n\n\n")
+    print(further_enriched.head(30))
+    print(further_enriched.tail(30))
 
     # Add calculated fields
-    further_enriched = calc_fields(enriched)
-    rounded = round_numeric_columns(further_enriched)
+    further_further_enriched = calc_fields(further_enriched)
+    rounded = round_numeric_columns(further_further_enriched)
+    print("\n\n\n\n")
+    print(rounded.head(30))
+    print(rounded.tail(30))
 
     # save
     rounded.to_csv("assets\\examples_and_output\\all_data.csv", index=False)
