@@ -1,0 +1,6 @@
+﻿# checkpoints & large data
+assets/checkpoints/
+assets/payroll_CSVs/
+*.csv
+*.xls
+*.xlsx

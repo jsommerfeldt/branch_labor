@@ -1,0 +1,418 @@
+{
+  "2024-12-29": {
+    "JA": {
+      "raw_labor_cost/case": ".49",
+      "labor_cost_with_pto/case": ".53",
+      "loaded_labor_cost/case": ".77"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".58",
+      "labor_cost_with_pto/case": ".63",
+      "loaded_labor_cost/case": ".92"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".57",
+      "labor_cost_with_pto/case": ".62",
+      "loaded_labor_cost/case": ".90"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".85",
+      "labor_cost_with_pto/case": ".93",
+      "loaded_labor_cost/case": "1.34"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".55",
+      "labor_cost_with_pto/case": ".60",
+      "loaded_labor_cost/case": ".87"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-02-02": {
+    "JA": {
+      "raw_labor_cost/case": ".50",
+      "labor_cost_with_pto/case": ".55",
+      "loaded_labor_cost/case": ".82"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.04"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".60",
+      "labor_cost_with_pto/case": ".66",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".85",
+      "labor_cost_with_pto/case": ".90",
+      "loaded_labor_cost/case": "1.36"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".55",
+      "labor_cost_with_pto/case": ".61",
+      "loaded_labor_cost/case": ".92"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-03-02": {
+    "JA": {
+      "raw_labor_cost/case": ".50",
+      "labor_cost_with_pto/case": ".55",
+      "loaded_labor_cost/case": ".79"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".60",
+      "labor_cost_with_pto/case": ".66",
+      "loaded_labor_cost/case": ".96"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".85",
+      "labor_cost_with_pto/case": ".90",
+      "loaded_labor_cost/case": "1.31"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".55",
+      "labor_cost_with_pto/case": ".61",
+      "loaded_labor_cost/case": ".89"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-03-30": {
+    "JA": {
+      "raw_labor_cost/case": ".47",
+      "labor_cost_with_pto/case": ".51",
+      "loaded_labor_cost/case": ".74"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".60",
+      "labor_cost_with_pto/case": ".66",
+      "loaded_labor_cost/case": ".96"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".75",
+      "labor_cost_with_pto/case": ".80",
+      "loaded_labor_cost/case": "1.15"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".50",
+      "labor_cost_with_pto/case": ".55",
+      "loaded_labor_cost/case": ".79"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-05-04": {
+    "JA": {
+      "raw_labor_cost/case": ".44",
+      "labor_cost_with_pto/case": ".48",
+      "loaded_labor_cost/case": ".70"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".60",
+      "labor_cost_with_pto/case": ".66",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".75",
+      "labor_cost_with_pto/case": ".80",
+      "loaded_labor_cost/case": "1.15"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".50",
+      "labor_cost_with_pto/case": ".55",
+      "loaded_labor_cost/case": ".79"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-06-01": {
+    "JA": {
+      "raw_labor_cost/case": ".42",
+      "labor_cost_with_pto/case": ".46",
+      "loaded_labor_cost/case": ".66"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".61",
+      "labor_cost_with_pto/case": ".66",
+      "loaded_labor_cost/case": ".96"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".60",
+      "labor_cost_with_pto/case": ".66",
+      "loaded_labor_cost/case": ".96"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".70",
+      "labor_cost_with_pto/case": ".74",
+      "loaded_labor_cost/case": "1.08"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".48",
+      "labor_cost_with_pto/case": ".52",
+      "loaded_labor_cost/case": ".76"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-06-29": {
+    "JA": {
+      "raw_labor_cost/case": ".42",
+      "labor_cost_with_pto/case": ".46",
+      "loaded_labor_cost/case": ".66"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".62",
+      "labor_cost_with_pto/case": ".67",
+      "loaded_labor_cost/case": ".97"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".61",
+      "labor_cost_with_pto/case": ".67",
+      "loaded_labor_cost/case": ".97"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".70",
+      "labor_cost_with_pto/case": ".74",
+      "loaded_labor_cost/case": "1.08"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".48",
+      "labor_cost_with_pto/case": ".52",
+      "loaded_labor_cost/case": ".76"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-08-03": {
+    "JA": {
+      "raw_labor_cost/case": ".51",
+      "labor_cost_with_pto/case": ".56",
+      "loaded_labor_cost/case": ".81"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".63",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".72",
+      "labor_cost_with_pto/case": ".76",
+      "loaded_labor_cost/case": "1.11"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".50",
+      "labor_cost_with_pto/case": ".55",
+      "loaded_labor_cost/case": ".79"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-08-31": {
+    "JA": {
+      "raw_labor_cost/case": ".51",
+      "labor_cost_with_pto/case": ".56",
+      "loaded_labor_cost/case": ".81"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".66",
+      "labor_cost_with_pto/case": ".71",
+      "loaded_labor_cost/case": "1.03"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".70",
+      "loaded_labor_cost/case": "1.02"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".75",
+      "labor_cost_with_pto/case": ".80",
+      "loaded_labor_cost/case": "1.15"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".59",
+      "labor_cost_with_pto/case": ".64",
+      "loaded_labor_cost/case": ".93"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-09-28": {
+    "JA": {
+      "raw_labor_cost/case": ".52",
+      "labor_cost_with_pto/case": ".57",
+      "loaded_labor_cost/case": ".82"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".70",
+      "labor_cost_with_pto/case": ".76",
+      "loaded_labor_cost/case": "1.10"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": ".70",
+      "loaded_labor_cost/case": "1.02"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".80",
+      "labor_cost_with_pto/case": ".85",
+      "loaded_labor_cost/case": "1.23"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".63",
+      "labor_cost_with_pto/case": ".69",
+      "loaded_labor_cost/case": "1.00"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-11-02": {
+    "JA": {
+      "raw_labor_cost/case": ".51",
+      "labor_cost_with_pto/case": ".56",
+      "loaded_labor_cost/case": ".81"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".70",
+      "labor_cost_with_pto/case": ".76",
+      "loaded_labor_cost/case": "1.10"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".65",
+      "labor_cost_with_pto/case": ".72",
+      "loaded_labor_cost/case": "1.04"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".85",
+      "labor_cost_with_pto/case": ".90",
+      "loaded_labor_cost/case": "1.31"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".59",
+      "labor_cost_with_pto/case": ".64",
+      "loaded_labor_cost/case": ".93"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025-11-30": {
+    "JA": {
+      "raw_labor_cost/case": ".65",
+      "labor_cost_with_pto/case": ".71",
+      "loaded_labor_cost/case": "1.03"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".70",
+      "labor_cost_with_pto/case": ".76",
+      "loaded_labor_cost/case": "1.10"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".67",
+      "labor_cost_with_pto/case": ".74",
+      "loaded_labor_cost/case": "1.07"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".85",
+      "labor_cost_with_pto/case": ".90",
+      "loaded_labor_cost/case": "1.31"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".52",
+      "labor_cost_with_pto/case": ".57",
+      "loaded_labor_cost/case": ".82"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": ".64",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.04"
+    }
+  },
+  "2025": {
+    "JA": {
+      "raw_labor_cost/case": ".50",
+      "labor_cost_with_pto/case": ".54",
+      "loaded_labor_cost/case": ".79"
+    },
+    "LX": {
+      "raw_labor_cost/case": ".66",
+      "labor_cost_with_pto/case": ".72",
+      "loaded_labor_cost/case": "1.04"
+    },
+    "ML": {
+      "raw_labor_cost/case": ".67",
+      "labor_cost_with_pto/case": ".73",
+      "loaded_labor_cost/case": "1.06"
+    },
+    "SP": {
+      "raw_labor_cost/case": ".78",
+      "labor_cost_with_pto/case": ".83",
+      "loaded_labor_cost/case": "1.20"
+    },
+    "WA": {
+      "raw_labor_cost/case": ".52",
+      "labor_cost_with_pto/case": ".56",
+      "loaded_labor_cost/case": ".82"
+    },
+    "TOTAL": {
+      "raw_labor_cost/case": "0",
+      "labor_cost_with_pto/case": "0",
+      "loaded_labor_cost/case": "1.03"
+    }
+  }
+}
