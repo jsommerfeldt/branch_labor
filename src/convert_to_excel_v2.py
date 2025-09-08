@@ -34,6 +34,12 @@ rename_map = {
 }
 df.rename(columns=rename_map, inplace=True)
 
+preferred_col_order = ['Week Start', 'Warehouse', 'Cases', 'Sales ($)', 'Sales/Case ($)',
+                       'Raw Labor Hours',       'Cases/Hr',
+                       'Raw Labor Cost ($)',    'Raw Labor Cost/Case ($)',      'Raw Labor Cost/Case Goal ($)',
+                       'Labor Cost w/ PTO ($)', 'Labor Cost w/ PTO/Case ($)',   'Labor Cost w/ PTO/Case Goal ($)',
+                       'Loaded Labor Cost ($)', 'Loaded Labor Cost/Case ($)',   'Loaded Labor Cost/Case Goal ($)']
+
 # Ensure numeric types for formatting (only convert columns that exist)
 numeric_columns = [
     'Sales ($)', 'Cases', 'Sales/Case ($)',
@@ -56,7 +62,7 @@ fill_grey = PatternFill(start_color="E2E2E2", end_color="E2E2E2", fill_type="sol
 fill_blue = PatternFill(start_color="B4E2F1", end_color="B4E2F1", fill_type="solid")
 
 # Function to apply formatting to columns
-def apply_column_formatting(ws, header_row=1):
+def apply_column_formatting(ws, headers, header_row=1):
     # Define separate sets for formatting
     currency_headers = {
         'Sales ($)', 'Sales/Case ($)',
@@ -92,24 +98,40 @@ for wh, group in df.groupby('Warehouse', sort=False):
     sheet_name = "HA" if str(wh) == "SP" else str(wh)
     ws = wb.create_sheet(title=sheet_name[:31])
 
-    # Preserve original behavior: include all columns except 'Warehouse'
-    headers = [col for col in group.columns if col != 'Warehouse']
+    # ----- Build headers in preferred order -----
+    # Toggle this to exclude 'Warehouse' if you want to keep your original behavior:
+    INCLUDE_WAREHOUSE_COLUMN = True
+
+    # Start from the group's actual columns
+    group_cols = list(group.columns)
+
+    # Optionally drop 'Warehouse' column (per original script behavior)
+    if not INCLUDE_WAREHOUSE_COLUMN and 'Warehouse' in group_cols:
+        group_cols.remove('Warehouse')
+
+    # Preferred-first intersection, then any remaining columns
+    ordered_first = [c for c in preferred_col_order if c in group_cols]
+    remaining = [c for c in group_cols if c not in ordered_first]
+    headers = ordered_first + remaining
+    # -------------------------------------------
+
+    # Write header row
     ws.append(headers)
 
-    # Bold header row
+    # Bold header
     for cell in ws[1]:
         cell.font = Font(bold=True)
 
     # Data rows with alternating fills
     for row_idx, (_, row) in enumerate(group.iterrows(), start=2):
-        values = [row[col] for col in headers]
+        values = [row.get(col) for col in headers]
         ws.append(values)
         fill = fill_grey if row_idx % 2 == 0 else fill_blue
         for cell in ws[row_idx]:
             cell.fill = fill
 
-    # Apply number/currency formats
-    apply_column_formatting(ws)
+    # Apply formats (pass the headers you used)
+    apply_column_formatting(ws, headers)
 
     # Autosize columns
     for col in ws.columns:
@@ -117,89 +139,5 @@ for wh, group in df.groupby('Warehouse', sort=False):
         ws.column_dimensions[col[0].column_letter].width = max_length + 2
 
 
-
-
-
-#                           --- Totals sheet ---
-# New behavior: sum totals, then recompute per-case/ratio metrics from those sums.
-if 'Week Start' not in df.columns:
-    raise ValueError("Expected 'Week Start' column not found after renaming. Check input file and headers.")
-
-# Columns to sum (only those that exist will be used)
-sum_candidates = [
-    'Sales ($)', 'Cases',
-    'Raw Labor Cost ($)', 'Raw Labor Hours',
-    'Labor Cost w/ PTO ($)', 'Loaded Labor Cost ($)'
-]
-sum_cols = [c for c in sum_candidates if c in df.columns]
-
-# Group by week and sum the additive measures
-agg = df.groupby('Week Start', as_index=False)[sum_cols].sum()
-
-# Recalculate derived per-case and ratio metrics from sums (avoid division by zero)
-def add_ratio(target_col, num_col, den_col):
-    if num_col in agg.columns and den_col in agg.columns:
-        agg[target_col] = agg[num_col].div(agg[den_col]).where(agg[den_col] != 0)
-
-# Sales per case
-add_ratio('Sales/Case ($)', 'Sales ($)', 'Cases')
-# Cases per hour
-add_ratio('Cases/Hr', 'Cases', 'Raw Labor Hours')
-# Labor cost per case variants
-add_ratio('Raw Labor Cost/Case ($)', 'Raw Labor Cost ($)', 'Cases')
-add_ratio('Labor Cost w/ PTO/Case ($)', 'Labor Cost w/ PTO ($)', 'Cases')
-add_ratio('Loaded Labor Cost/Case ($)', 'Loaded Labor Cost ($)', 'Cases')
-
-"""
-# NEW: Weighted averages for goal per-case metrics across warehouses
-# (goals are per-case rates, so aggregate using Cases as weights)
-goal_cols = [
-    'Raw Labor Cost/Case Goal ($)',
-    'Labor Cost w/ PTO/Case Goal ($)',
-    'Loaded Labor Cost/Case Goal ($)',
-]
-if 'Cases' in df.columns:
-    for gcol in [c for c in goal_cols if c in df.columns]:
-        tmp = df[['Week Start', 'Cases', gcol]].dropna()
-        if not tmp.empty:
-            tmp = tmp.assign(__wval=tmp['Cases'] * tmp[gcol])
-            wagg = tmp.groupby('Week Start', as_index=False).agg({'__wval': 'sum', 'Cases': 'sum'})
-            wagg[gcol] = wagg['__wval'] / wagg['Cases']
-            agg = agg.merge(wagg[['Week Start', gcol]], on='Week Start', how='left')
-"""
-
-# Preferred column order for the Totals sheet (keep only columns that exist)
-preferred_order = [
-    'Week Start',
-    'Sales ($)', 'Cases', 'Sales/Case ($)',
-    'Raw Labor Cost ($)', 'Raw Labor Hours', 'Cases/Hr', 'Raw Labor Cost/Case ($)',
-    'Labor Cost w/ PTO ($)', 'Labor Cost w/ PTO/Case ($)',
-    'Loaded Labor Cost ($)', 'Loaded Labor Cost/Case ($)'
-]
-final_cols = [c for c in preferred_order if c in agg.columns]
-agg = agg[final_cols]
-
-ws_totals = wb.create_sheet(title='Totals')
-headers = list(agg.columns)
-ws_totals.append(headers)
-
-# Bold header
-for cell in ws_totals[1]:
-    cell.font = Font(bold=True)
-
-# Data rows with alternating fills
-for row_idx, row in enumerate(agg.itertuples(index=False), start=2):
-    ws_totals.append(list(row))
-    fill = fill_grey if row_idx % 2 == 0 else fill_blue
-    for cell in ws_totals[row_idx]:
-        cell.fill = fill
-
-# Apply number/currency formats
-apply_column_formatting(ws_totals)
-
-# Autosize columns
-for col in ws_totals.columns:
-    max_length = max(len(str(cell.value)) if cell.value is not None else 0 for cell in col)
-    ws_totals.column_dimensions[col[0].column_letter].width = max_length + 2
 # Save workbook
 wb.save(OUTPUT_XLSX)

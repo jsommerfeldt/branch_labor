@@ -197,12 +197,28 @@ def calc_fields(df: pd.DataFrame):
     df.loc[df['warehouse'] == 'JA', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.09
     df.loc[df['warehouse'] == 'ML', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.1
     df.loc[df['warehouse'] == 'SP', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.06
+    # 1) Compute the weekly sum of PTO-loaded labor cost from non-TOTAL warehouses
+    weekly_pto_sum = (
+        df.loc[df['warehouse'] != 'TOTAL']
+        .groupby('week_start', dropna=False)['labor_cost_with_pto']
+        .sum()
+    )
+    # 2) Assign that weekly total into each TOTAL row for its week
+    df.loc[df['warehouse'] == 'TOTAL', 'labor_cost_with_pto'] = (
+        df.loc[df['warehouse'] == 'TOTAL', 'week_start'].map(weekly_pto_sum)
+    )
+
+
 
     df.loc[df['warehouse'] == 'LX', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
     df.loc[df['warehouse'] == 'WA', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
     df.loc[df['warehouse'] == 'JA', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
     df.loc[df['warehouse'] == 'ML', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
     df.loc[df['warehouse'] == 'SP', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
+    df.loc[df['warehouse'] == 'TOTAL', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
+
+
+
 
     df['loaded_labor_cost'] = df['labor_cost_with_pto'] * 1.45
     df['loaded_labor_cost/case'] = df['loaded_labor_cost'] / df['cases']
@@ -273,16 +289,85 @@ def round_numeric_columns(df: pd.DataFrame, decimals: int = 2) -> pd.DataFrame:
     df[numeric_cols] = df[numeric_cols].round(decimals)
     return df
 
+def add_total_rows_for_sales(sales_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Append one 'TOTAL' row per week_start to the sales DataFrame.
+    Sums Sales and Cases, and recomputes cost_per_case from those sums.
+    """
+    if sales_df.empty:
+        return sales_df
+
+    # Work only from non-TOTAL rows to avoid double counting if re-run
+    base = sales_df[sales_df['warehouse'].str.upper() != 'TOTAL'].copy()
+
+    totals = (
+        base.groupby('week_start', as_index=False)
+            .agg({'sales': 'sum',
+                  'cases': 'sum'})
+    )
+    totals['warehouse'] = 'TOTAL'
+    # Recompute per-case rate from sums (correct way to roll up a rate)
+    totals['cost_per_case'] = totals['sales'] / totals['cases']
+
+    # Same column order as input
+    cols = list(sales_df.columns)
+    for col in ['sales', 'cases', 'cost_per_case', 'warehouse', 'week_start']:
+        if col not in cols:
+            cols.append(col)
+
+    out = pd.concat([base, totals[cols]], ignore_index=True)
+    # Make sure types match (week_start is datetime in your pipeline)
+    if 'week_start' in out.columns:
+        out['week_start'] = pd.to_datetime(out['week_start'])
+    return out
+
+
+def add_total_rows_for_payroll(payroll_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Append one 'TOTAL' row per week_start to the payroll DataFrame.
+    Sums raw_labor_cost and raw_labor_hours.
+    """
+    if payroll_df.empty:
+        return payroll_df
+
+    # Work only from non-TOTAL rows to avoid double counting if re-run
+    base = payroll_df[payroll_df['warehouse'].str.upper() != 'TOTAL'].copy()
+
+    keep_cols = [c for c in ['week_start', 'warehouse', 'raw_labor_cost', 'raw_labor_hours'] if c in base.columns]
+    base = base[keep_cols]
+
+    totals = (
+        base.groupby('week_start', as_index=False)
+            .agg({c: 'sum' for c in keep_cols if c not in ['week_start', 'warehouse']})
+    )
+    totals['warehouse'] = 'TOTAL'
+
+    out = pd.concat([base, totals], ignore_index=True)
+    # De-dup just in case
+    out = (
+        out.sort_values(['week_start', 'warehouse'])
+           .drop_duplicates(subset=['week_start', 'warehouse'], keep='last')
+    )
+    # Ensure dtypes
+    if 'week_start' in out.columns:
+        out['week_start'] = pd.to_datetime(out['week_start'])
+    out['warehouse'] = out['warehouse'].astype(str).str.strip().str.upper()
+    return out
+
 def main():
     # Load sales/cases and payroll
     sales = pd.read_csv(SALES_PATH, parse_dates=["week_start"])
     sales["warehouse"] = sales["warehouse"].astype(str).str.strip().str.upper()
-
     payroll = load_payroll_df(PAYROLL_PATH)
+
     monthly_KPIs = load_cost_per_case_df(KPI_PATH)
 
     # Expand monthly KPIs to weekly
     weekly_KPIs = expand_monthly_kpis_to_weeks(monthly_KPIs)
+
+    # >>> NEW: add explicit weekly TOTAL rows before any merges <<<
+    sales = add_total_rows_for_sales(sales)
+    payroll = add_total_rows_for_payroll(payroll)
 
     # Left join to enrich with payroll fields
     enriched = sales.merge(
@@ -295,9 +380,7 @@ def main():
     print(enriched.tail(30))
 
 
-
-
-    #                   --- Drop key "2025", Merge on week_start and warehouse, Then add 2025 KPIs back in ---
+    #                   --- Drop key "2025", Merge on week_start and warehouse, (Then add 2025 KPIs back in - Not Implemented) ---
     # Keep rows where week_start is a 4-char year string (e.g., "2025") untouched
     year_only_KPIs = weekly_KPIs[weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
 
@@ -312,20 +395,17 @@ def main():
         on=["week_start", "warehouse"],
         validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
     )
-    print("\n\n\n\n")
-    print(further_enriched.head(30))
-    print(further_enriched.tail(30))
 
     # Add calculated fields
     further_further_enriched = calc_fields(further_enriched)
+
+    # Round all numeric columns to 2 decimal places
     rounded = round_numeric_columns(further_further_enriched)
-    print("\n\n\n\n")
-    print(rounded.head(30))
-    print(rounded.tail(30))
 
     # save
     rounded.to_csv("assets\\examples_and_output\\all_data.csv", index=False)
     return enriched
+
 
 if __name__ == "__main__":
     _ = main()

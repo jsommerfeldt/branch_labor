@@ -41,7 +41,7 @@ print()
 print(JA.info())
 print()
 print(LX.info())
-print("Totals:")
+print()
 print(Totals.info())
 
 """
@@ -56,3 +56,46 @@ rename_map = {
 }
 df.rename(columns=rename_map, inplace=True)
 """
+
+
+def main():
+    # Load sales/cases and payroll (NO TOTAL rows yet)
+    sales = pd.read_csv(SALES_PATH, parse_dates=["week_start"])
+    sales["warehouse"] = sales["warehouse"].astype(str).str.strip().str.upper()
+    payroll = load_payroll_df(PAYROLL_PATH)
+
+    # Load & expand KPI goals (we'll merge AFTER we create TOTAL rows)
+    monthly_KPIs = load_cost_per_case_df(KPI_PATH)
+    weekly_KPIs = expand_monthly_kpis_to_weeks(monthly_KPIs)
+
+    # Merge sales+payroll per site
+    enriched = sales.merge(
+        payroll,
+        how="left",
+        on=["week_start", "warehouse"],
+        validate="m:1"  # each (week_start, warehouse) maps to at most one payroll row
+    )
+
+    # Calculate per-site fields (PTO, loaded, /case, cases/hr)
+    enriched = calc_fields(enriched)
+
+    # >>> NEW: Create TOTAL rows from the computed site rows <<<
+    with_totals = add_total_rows_general(enriched)
+
+    # Merge KPI goals for real weeks (includes TOTAL rows where provided)
+    date_rows_KPIs = weekly_KPIs[
+        ~weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)
+    ].copy()
+    date_rows_KPIs["week_start"] = pd.to_datetime(date_rows_KPIs["week_start"])
+
+    final = with_totals.merge(
+        date_rows_KPIs,
+        how="left",
+        on=["week_start", "warehouse"],
+        validate="m:1"
+    )
+
+    # Round and save for Excel export
+    rounded = round_numeric_columns(final)
+    rounded.to_csv("assets\\\\examples_and_output\\\\all_data.csv", index=False)
+    return rounded
