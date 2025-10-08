@@ -768,5 +768,115 @@
       "raw_labor_cost": "29747",
       "raw_labor_hours": "1212"
     }
+  },
+  "2025-08-31": {
+    "JA": {
+      "raw_labor_cost": "11691",
+      "raw_labor_hours": "494"
+    },
+    "LX": {
+      "raw_labor_cost": "19363",
+      "raw_labor_hours": "769"
+    },
+    "ML": {
+      "raw_labor_cost": "31008",
+      "raw_labor_hours": "1287"
+    },
+    "SP": {
+      "raw_labor_cost": "69658",
+      "raw_labor_hours": "2960"
+    },
+    "WA": {
+      "raw_labor_cost": "28447",
+      "raw_labor_hours": "1172"
+    }
+  },
+  "2025-09-07": {
+    "JA": {
+      "raw_labor_cost": "12877",
+      "raw_labor_hours": "533"
+    },
+    "LX": {
+      "raw_labor_cost": "21000",
+      "raw_labor_hours": "835"
+    },
+    "ML": {
+      "raw_labor_cost": "29389",
+      "raw_labor_hours": "1227"
+    },
+    "SP": {
+      "raw_labor_cost": "72143",
+      "raw_labor_hours": "3056"
+    },
+    "WA": {
+      "raw_labor_cost": "29302",
+      "raw_labor_hours": "1184"
+    }
+  },
+  "2025-09-14": {
+    "JA": {
+      "raw_labor_cost": "12808",
+      "raw_labor_hours": "520"
+    },
+    "LX": {
+      "raw_labor_cost": "19832",
+      "raw_labor_hours": "785"
+    },
+    "ML": {
+      "raw_labor_cost": "31633",
+      "raw_labor_hours": "1320"
+    },
+    "SP": {
+      "raw_labor_cost": "66802",
+      "raw_labor_hours": "2802"
+    },
+    "WA": {
+      "raw_labor_cost": "30781",
+      "raw_labor_hours": "1260"
+    }
+  },
+  "2025-09-21": {
+    "JA": {
+      "raw_labor_cost": "12332",
+      "raw_labor_hours": "504"
+    },
+    "LX": {
+      "raw_labor_cost": "20153",
+      "raw_labor_hours": "795"
+    },
+    "ML": {
+      "raw_labor_cost": "31597",
+      "raw_labor_hours": "1323"
+    },
+    "SP": {
+      "raw_labor_cost": "67340",
+      "raw_labor_hours": "2844"
+    },
+    "WA": {
+      "raw_labor_cost": "29713",
+      "raw_labor_hours": "1226"
+    }
+  },
+  "2025-09-28": {
+    "JA": {
+      "raw_labor_cost": "12201",
+      "raw_labor_hours": "493"
+    },
+    "LX": {
+      "raw_labor_cost": "21570",
+      "raw_labor_hours": "859"
+    },
+    "ML": {
+      "raw_labor_cost": "30720",
+      "raw_labor_hours": "1306"
+    },
+    "SP": {
+      "raw_labor_cost": "69914",
+      "raw_labor_hours": "2926"
+    },
+    "WA": {
+      "raw_labor_cost": "31021",
+      "raw_labor_hours": "1262"
+    }
   }
 }

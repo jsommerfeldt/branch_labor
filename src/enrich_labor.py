@@ -192,6 +192,7 @@ def calc_fields(df: pd.DataFrame):
     df['cases/hr'] = df['cases'] / df['raw_labor_hours']
     df['raw_labor_cost/case'] = df['raw_labor_cost'] / df['cases']
 
+    #                                                                               Multipliers per Brick 2025
     df.loc[df['warehouse'] == 'LX', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.08
     df.loc[df['warehouse'] == 'WA', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.11
     df.loc[df['warehouse'] == 'JA', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.09
@@ -400,7 +401,7 @@ def main():
     further_further_enriched = calc_fields(further_enriched)
 
     # Round all numeric columns to 2 decimal places
-    rounded = round_numeric_columns(further_further_enriched)
+    rounded = round_numeric_columns(further_further_enriched, decimals=6)
 
     # save
     rounded.to_csv("assets\\examples_and_output\\all_data.csv", index=False)

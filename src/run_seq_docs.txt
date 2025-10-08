@@ -1,8 +1,8 @@
 1. Update:
-    a. "historical_payroll.json"    - Use payroll data with no TLM (emailed weekly every Wednesday) to update the hours and wages for the past week  
+    a. "historical_payroll.json"    - Update weekly, use payroll data with no TLM (emailed weekly every Wednesday) to update the hours and wages for the past week  
+    b. "historical_KPI_goals.json"  - Update as needed, contains all the KPI goals calculated by Brick Hopkins
 
 2. Run:
     a. "main.py"                    - queries database. saves two CSV versions of the data: initial query data and readable formatted data
     b. "enrich_labor.py"            - enriches the readable formatted data with historical payroll data (total hours and total wage cost) from Brick's previous reports
-    c. "convert_to_excel.py"        - populates a .xlsx with the readable formatted data with additional formatting
-    d. "KPI_view.py"                - populates a .xlsx with KPI goals and the three different costs/case for each DC
+    c. "convert_to_excel.py"        - populates a .xlsx with the readable formatted data with additional formatting, and emails it to the designated recipients
