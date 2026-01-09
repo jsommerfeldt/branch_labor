@@ -10,8 +10,8 @@ import pandas as pd
 from datetime import timedelta
 
 PAYROLL_PATH = Path("assets\\dict\\historical_payroll.json")
-KPI_PATH     = Path("assets\\dict\\historical_KPI_goals.json")
 SALES_PATH   = Path("assets\\wh_sales_cases.csv")
+KPI_PATH     = Path("assets\\dict\\historical_KPI_goals.json")
 
 def parse_payroll_text(text: str) -> pd.DataFrame:
     """
@@ -121,40 +121,41 @@ def load_cost_per_case_df(payroll_path: Path) -> pd.DataFrame:
     """
     Load labor cost per case metrics from a JSON dictionary.
     Expected JSON shape:
-    { "2025-01-05": { "JA": {"raw_labor_cost/case": ..., "labor_cost_with_pto/case": ..., ...}, ... }, ... }
+      { "2025-01-05": { "JA": {"raw_labor_cost/case": ..., "labor_cost_with_pto/case": ..., ...}, ... }, ... }
     """
     text = payroll_path.read_text(encoding="utf-8").strip()
+
     try:
         obj = json.loads(text)
         if isinstance(obj, dict):
             rows = []
             for week, wh_dict in obj.items():
-                w = str(week).strip()
-
-                # Keep 4-digit years (e.g., "2025") as year-only rows
-                if w.isdigit() and len(w) == 4:
-                    week_value = w  # leave as string
+                if len(week) != 4:
+                    for wh, metrics in (wh_dict or {}).items():
+                        row = {
+                            "week_start": pd.to_datetime(week),
+                            "warehouse": str(wh).strip().upper(),
+                        }
+                        # Dynamically include all metrics
+                        for key, value in metrics.items():
+                            try:
+                                row[key] = float(value)
+                            except (TypeError, ValueError):
+                                row[key] = float("nan")
+                        rows.append(row)
                 else:
-                    # Try to parse as a real date; skip non-date labels (e.g., "YTD", "MTD", "QTD")
-                    parsed = pd.to_datetime(w, errors="coerce")
-                    if pd.isna(parsed):
-                        # Optional: log skipped label
-                        # print(f"[load_cost_per_case_df] Skipping non-date KPI label: {w}")
-                        continue
-                    week_value = parsed
-
-                for wh, metrics in (wh_dict or {}).items():
-                    row = {
-                        "week_start": week_value,
-                        "warehouse": str(wh).strip().upper(),
-                    }
-                    # Dynamically include all metrics
-                    for key, value in metrics.items():
-                        try:
-                            row[key] = float(value)
-                        except (TypeError, ValueError):
-                            row[key] = float("nan")
-                    rows.append(row)
+                    for wh, metrics in (wh_dict or {}).items():
+                        row = {
+                            "week_start": str(week),
+                            "warehouse": str(wh).strip().upper(),
+                        }
+                        # Dynamically include all metrics
+                        for key, value in metrics.items():
+                            try:
+                                row[key] = float(value)
+                            except (TypeError, ValueError):
+                                row[key] = float("nan")
+                        rows.append(row)
             df = pd.DataFrame(rows)
         else:
             raise ValueError("Unexpected JSON structure")
@@ -163,13 +164,9 @@ def load_cost_per_case_df(payroll_path: Path) -> pd.DataFrame:
 
     # Basic cleanup
     if "week_start" in df.columns:
-        # Leave 4-digit year strings as-is; ensure dates are Timestamp/Date
-        def _norm_week(x):
-            if isinstance(x, str) and x.isdigit() and len(x) == 4:
-                return x  # year-only rows stay as string
-            return pd.to_datetime(x)  # already parseable timestamps
-        df["week_start"] = df["week_start"].apply(_norm_week)
-
+        df["week_start"] = df["week_start"].apply(
+            lambda x: pd.to_datetime(x).date() if not (isinstance(x, str) and len(x) == 4) else x
+        )
     if "warehouse" in df.columns:
         df["warehouse"] = df["warehouse"].astype(str).str.strip().str.upper()
 
@@ -179,6 +176,7 @@ def load_cost_per_case_df(payroll_path: Path) -> pd.DataFrame:
             df.sort_values(["week_start", "warehouse"])
               .drop_duplicates(subset=["week_start", "warehouse"], keep="last")
         )
+
     return df
 
 def calc_fields(df: pd.DataFrame):
@@ -361,8 +359,6 @@ def main():
     # Load sales/cases and payroll
     sales = pd.read_csv(SALES_PATH, parse_dates=["week_start"])
     sales["warehouse"] = sales["warehouse"].astype(str).str.strip().str.upper()
-    sales = sales[sales["week_start"] != '12/28/2025']
-    
     payroll = load_payroll_df(PAYROLL_PATH)
 
     monthly_KPIs = load_cost_per_case_df(KPI_PATH)
@@ -381,8 +377,8 @@ def main():
         on=["week_start", "warehouse"],
         validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
     )
-    print(enriched.head(100))
-    print(enriched.tail(50))
+    print(enriched.head(30))
+    print(enriched.tail(30))
 
 
     #                   --- Drop key "2025", Merge on week_start and warehouse, (Then add 2025 KPIs back in - Not Implemented) ---

@@ -878,5 +878,291 @@
       "raw_labor_cost": "31021",
       "raw_labor_hours": "1262"
     }
+  },
+  "2025-10-05": {
+    "JA": {
+      "raw_labor_cost": "12707",
+      "raw_labor_hours": "518"
+    },
+    "LX": {
+      "raw_labor_cost": "21343",
+      "raw_labor_hours": "848"
+    },
+    "ML": {
+      "raw_labor_cost": "29010",
+      "raw_labor_hours": "1229"
+    },
+    "SP": {
+      "raw_labor_cost": "69942",
+      "raw_labor_hours": "2958"
+    },
+    "WA": {
+      "raw_labor_cost": "31123",
+      "raw_labor_hours": "1264"
+    }
+  },
+  "2025-10-12": {
+    "JA": {
+      "raw_labor_cost": "12813",
+      "raw_labor_hours": "522"
+    },
+    "LX": {
+      "raw_labor_cost": "20667",
+      "raw_labor_hours": "824"
+    },
+    "ML": {
+      "raw_labor_cost": "28215",
+      "raw_labor_hours": "1189"
+    },
+    "SP": {
+      "raw_labor_cost": "74692",
+      "raw_labor_hours": "3148"
+    },
+    "WA": {
+      "raw_labor_cost": "29393",
+      "raw_labor_hours": "1194"
+    }
+  },
+  "2025-10-19": {
+    "JA": {
+      "raw_labor_cost": "11272",
+      "raw_labor_hours": "459"
+    },
+    "LX": {
+      "raw_labor_cost": "19452",
+      "raw_labor_hours": "776"
+    },
+    "ML": {
+      "raw_labor_cost": "25144",
+      "raw_labor_hours": "1109"
+    },
+    "SP": {
+      "raw_labor_cost": "74351",
+      "raw_labor_hours": "3156"
+    },
+    "WA": {
+      "raw_labor_cost": "29976",
+      "raw_labor_hours": "1204"
+    }
+  },
+  "2025-10-26": {
+    "JA": {
+      "raw_labor_cost": "11479",
+      "raw_labor_hours": "458"
+    },
+    "LX": {
+      "raw_labor_cost": "19808",
+      "raw_labor_hours": "780"
+    },
+    "ML": {
+      "raw_labor_cost": "24814",
+      "raw_labor_hours": "1104"
+    },
+    "SP": {
+      "raw_labor_cost": "71816",
+      "raw_labor_hours": "3069"
+    },
+    "WA": {
+      "raw_labor_cost": "28635",
+      "raw_labor_hours": "1148"
+    }
+  },
+  "2025-11-02": {
+    "JA": {
+      "raw_labor_cost": "10577",
+      "raw_labor_hours": "429"
+    },
+    "LX": {
+      "raw_labor_cost": "18808",
+      "raw_labor_hours": "729"
+    },
+    "ML": {
+      "raw_labor_cost": "25482",
+      "raw_labor_hours": "1160"
+    },
+    "SP": {
+      "raw_labor_cost": "69110",
+      "raw_labor_hours": "2943"
+    },
+    "WA": {
+      "raw_labor_cost": "27954",
+      "raw_labor_hours": "1131"
+    }
+  },
+  "2025-11-09": {
+    "JA": {
+      "raw_labor_cost": "11595",
+      "raw_labor_hours": "462"
+    },
+    "LX": {
+      "raw_labor_cost": "19389",
+      "raw_labor_hours": "752"
+    },
+    "ML": {
+      "raw_labor_cost": "26328",
+      "raw_labor_hours": "1185"
+    },
+    "SP": {
+      "raw_labor_cost": "67323",
+      "raw_labor_hours": "2850"
+    },
+    "WA": {
+      "raw_labor_cost": "26830",
+      "raw_labor_hours": "1099"
+    }
+  },
+  "2025-11-16": {
+    "JA": {
+      "raw_labor_cost": "11613",
+      "raw_labor_hours": "464"
+    },
+    "LX": {
+      "raw_labor_cost": "19877",
+      "raw_labor_hours": "779"
+    },
+    "ML": {
+      "raw_labor_cost": "26119",
+      "raw_labor_hours": "1185"
+    },
+    "SP": {
+      "raw_labor_cost": "72084",
+      "raw_labor_hours": "3046"
+    },
+    "WA": {
+      "raw_labor_cost": "30044",
+      "raw_labor_hours": "1227"
+    }
+  },
+  "2025-11-23": {
+    "JA": {
+      "raw_labor_cost": "10227",
+      "raw_labor_hours": "411"
+    },
+    "LX": {
+      "raw_labor_cost": "18152",
+      "raw_labor_hours": "721"
+    },
+    "ML": {
+      "raw_labor_cost": "25189",
+      "raw_labor_hours": "1151"
+    },
+    "SP": {
+      "raw_labor_cost": "58891",
+      "raw_labor_hours": "2489"
+    },
+    "WA": {
+      "raw_labor_cost": "27183",
+      "raw_labor_hours": "1117"
+    }
+  },
+  "2025-11-30": {
+    "JA": {
+      "raw_labor_cost": "11447",
+      "raw_labor_hours": "463"
+    },
+    "LX": {
+      "raw_labor_cost": "21574",
+      "raw_labor_hours": "852"
+    },
+    "ML": {
+      "raw_labor_cost": "24742",
+      "raw_labor_hours": "1110"
+    },
+    "SP": {
+      "raw_labor_cost": "66225",
+      "raw_labor_hours": "2805"
+    },
+    "WA": {
+      "raw_labor_cost": "29759",
+      "raw_labor_hours": "1210"
+    }
+  },
+  "2025-12-07": {
+    "JA": {
+      "raw_labor_cost": "11857",
+      "raw_labor_hours": "482"
+    },
+    "LX": {
+      "raw_labor_cost": "21689",
+      "raw_labor_hours": "872"
+    },
+    "ML": {
+      "raw_labor_cost": "29598",
+      "raw_labor_hours": "1290"
+    },
+    "SP": {
+      "raw_labor_cost": "67092",
+      "raw_labor_hours": "2867"
+    },
+    "WA": {
+      "raw_labor_cost": "30607",
+      "raw_labor_hours": "1247"
+    }
+  },
+  "2025-12-14": {
+    "JA": {
+      "raw_labor_cost": "12376",
+      "raw_labor_hours": "504"
+    },
+    "LX": {
+      "raw_labor_cost": "22707",
+      "raw_labor_hours": "934"
+    },
+    "ML": {
+      "raw_labor_cost": "30582",
+      "raw_labor_hours": "1345"
+    },
+    "SP": {
+      "raw_labor_cost": "71259",
+      "raw_labor_hours": "3024"
+    },
+    "WA": {
+      "raw_labor_cost": "30299",
+      "raw_labor_hours": "1247"
+    }
+  },
+  "2025-12-21": {
+    "JA": {
+      "raw_labor_cost": "10290",
+      "raw_labor_hours": "442"
+    },
+    "LX": {
+      "raw_labor_cost": "19095",
+      "raw_labor_hours": "779"
+    },
+    "ML": {
+      "raw_labor_cost": "26965",
+      "raw_labor_hours": "1359"
+    },
+    "SP": {
+      "raw_labor_cost": "58638",
+      "raw_labor_hours": "2525"
+    },
+    "WA": {
+      "raw_labor_cost": "25853",
+      "raw_labor_hours": "1063"
+    }
+  },
+  "2025-12-28": {
+    "JA": {
+      "raw_labor_cost": "10667",
+      "raw_labor_hours": "445"
+    },
+    "LX": {
+      "raw_labor_cost": "18534",
+      "raw_labor_hours": "764"
+    },
+    "ML": {
+      "raw_labor_cost": "30267",
+      "raw_labor_hours": "1563"
+    },
+    "SP": {
+      "raw_labor_cost": "58944",
+      "raw_labor_hours": "2556"
+    },
+    "WA": {
+      "raw_labor_cost": "25383",
+      "raw_labor_hours": "1065"
+    }
   }
 }

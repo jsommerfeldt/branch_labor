@@ -104,8 +104,8 @@ try:
     print("...Query executed")
 
     # Export initial data
-    df.to_csv("assets\\checkpoints\\queried_data.csv", index=False)
-    print("Query output saved")
+    # df.to_csv("assets\\checkpoints\\queried_data.csv", index=False)
+    # print("Query output saved")
 
     df = df[df["customer_name"] != "PHYSICAL INVENTORY ADJUSTMENTS"]
     df = df[df["customer_name"] != "LA PERLA - CROSS DOCK"]
@@ -129,11 +129,9 @@ try:
                     'cost_per_case': cost_per_case
                 })
 
-    # Load
     output_df = pd.DataFrame(results)
     output_df = output_df[~output_df["warehouse"].isin(["~E", "CM"])]
     output_df.to_csv("assets\\wh_sales_cases.csv", index=False)
 
 except Exception as e:
     print("Query Error:", e)
-

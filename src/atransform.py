@@ -9,9 +9,11 @@ from pathlib import Path
 import pandas as pd
 from datetime import timedelta
 
-PAYROLL_PATH = Path("assets\\dict\\historical_payroll.json")
-KPI_PATH     = Path("assets\\dict\\historical_KPI_goals.json")
-SALES_PATH   = Path("assets\\wh_sales_cases.csv")
+PAYROLL_PATH        = Path("assets\\dict\\historical_payroll.json")
+KPI_PATH            = Path("assets\\dict\\historical_KPI_goals.json")
+SALES_PATH          = Path("assets\\wh_sales_cases.csv")
+TIME_PATH           = Path("assets\\time.csv")
+TRANSFER_CASES_PATH = Path("assets\\transfer_cases.csv")
 
 def parse_payroll_text(text: str) -> pd.DataFrame:
     """
@@ -305,8 +307,9 @@ def add_total_rows_for_sales(sales_df: pd.DataFrame) -> pd.DataFrame:
 
     totals = (
         base.groupby('week_start', as_index=False)
-            .agg({'sales': 'sum',
-                  'cases': 'sum'})
+            .agg({'sales'           : 'sum',
+                  'cases'           : 'sum',
+                  'transfer_cases'  : 'sum'})
     )
     totals['warehouse'] = 'TOTAL'
     # Recompute per-case rate from sums (correct way to roll up a rate)
@@ -357,33 +360,79 @@ def add_total_rows_for_payroll(payroll_df: pd.DataFrame) -> pd.DataFrame:
     out['warehouse'] = out['warehouse'].astype(str).str.strip().str.upper()
     return out
 
-def main():
-    # Load sales/cases and payroll
-    sales = pd.read_csv(SALES_PATH, parse_dates=["week_start"])
-    sales["warehouse"] = sales["warehouse"].astype(str).str.strip().str.upper()
-    sales = sales[sales["week_start"] != '12/28/2025']
-    
-    payroll = load_payroll_df(PAYROLL_PATH)
+def integrate_transfer_cases(sales_cases: pd.DataFrame, transfer_cases: pd.DataFrame):
+    # 1) Normalize week_start date-times to midnight to ensure exact key matches
+    sales_cases["week_start"] = pd.to_datetime(sales_cases["week_start"]).dt.normalize()
+    transfer_cases["sunday_saturdayweekstart"] = pd.to_datetime(
+        transfer_cases["sunday_saturdayweekstart"]
+    ).dt.normalize()
 
+    # 2) Identify the WEEKLY_RECEIVE_QUANTITY_* columns (wide format)
+    qty_cols = transfer_cases.filter(regex=r"^WEEKLY_RECEIVE_QUANTITY_").columns
+
+    # 3) Melt to long format: one row per (week_start, warehouse_suffix)
+    tc_long = transfer_cases.melt(
+        id_vars=["sunday_saturdayweekstart"],
+        value_vars=qty_cols,
+        var_name="qty_col",
+        value_name="transfer_cases"
+    )
+
+    # 4) Extract the last two characters (warehouse suffix) from the column names
+    tc_long["warehouse_suffix"] = tc_long["qty_col"].str[-2:]
+
+    # 5) Map suffix → sales.warehouse values
+    #    Based on your data, 'HA' daily query used TRANSFER_FROM_WAREHOUSE = 'SP'.
+    #    If that's intentional, map 'HA' → 'SP' so it aligns with the sales warehouse codes.
+    suffix_to_warehouse = {
+        "HA": "SP",
+        "JA": "JA",
+        "ML": "ML",
+        "LX": "LX",
+        "WA": "WA",
+    }
+
+    tc_long["warehouse"] = tc_long["warehouse_suffix"].map(suffix_to_warehouse)
+
+    # (Optional) If you want to drop rows where suffix did not map (unexpected suffixes):
+    tc_long = tc_long[tc_long["warehouse"].notna()]
+
+    # 6) Clean up columns and rename the date key to match sales
+    tc_long = tc_long.rename(columns={"sunday_saturdayweekstart": "week_start"})
+    tc_long = tc_long[["week_start", "warehouse", "transfer_cases"]]
+
+    # 7) Merge onto sales on (week_start, warehouse)
+    sales_with_transfer = sales_cases.merge(tc_long, on=["week_start", "warehouse"], how="left")
+
+    # Now `sales_with_transfer` contains:
+    # week_start, warehouse, sales, cases, cost_per_case, transfer_cases
+    return sales_with_transfer
+
+if __name__ == "__main__":
+    # Load sale/case and payroll info
+    payroll = load_payroll_df(PAYROLL_PATH)
     monthly_KPIs = load_cost_per_case_df(KPI_PATH)
+    sales_cases = pd.read_csv(SALES_PATH, parse_dates=["week_start"])
+    time = pd.read_csv(TIME_PATH, parse_dates=["week_start"])    # Necessary for accounting time logic
+    transfer_cases = pd.read_csv(TRANSFER_CASES_PATH, parse_dates=["sunday_saturdayweekstart"])
+
+    # Immediately add transfer cases to the sale/case data using special join logic
+    sales_cases = integrate_transfer_cases(sales_cases=sales_cases, transfer_cases=transfer_cases)
 
     # Expand monthly KPIs to weekly
     weekly_KPIs = expand_monthly_kpis_to_weeks(monthly_KPIs)
 
-    # >>> NEW: add explicit weekly TOTAL rows before any merges <<<
-    sales = add_total_rows_for_sales(sales)
+    # Add explicit weekly TOTAL rows before any merges
+    sales_cases = add_total_rows_for_sales(sales_cases)
     payroll = add_total_rows_for_payroll(payroll)
 
-    # Left join to enrich with payroll fields
-    enriched = sales.merge(
+    # Left join payroll KPI actuals to sales 
+    enriched = sales_cases.merge(
         payroll,
         how="left",
         on=["week_start", "warehouse"],
         validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
     )
-    print(enriched.head(100))
-    print(enriched.tail(50))
-
 
     #                   --- Drop key "2025", Merge on week_start and warehouse, (Then add 2025 KPIs back in - Not Implemented) ---
     # Keep rows where week_start is a 4-char year string (e.g., "2025") untouched
@@ -393,7 +442,7 @@ def main():
     date_rows_KPIs = weekly_KPIs[~weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
     date_rows_KPIs['week_start'] = pd.to_datetime(date_rows_KPIs['week_start'])
 
-    # Left join to further enrich KPIs
+    # Left join payroll KPI benchmarks to previously enriched data
     further_enriched = enriched.merge(
         date_rows_KPIs,
         how="left",
@@ -405,12 +454,10 @@ def main():
     further_further_enriched = calc_fields(further_enriched)
 
     # Round all numeric columns to 2 decimal places
-    rounded = round_numeric_columns(further_further_enriched, decimals=6)
+    stage_final = round_numeric_columns(further_further_enriched, decimals=6)
 
-    # save
-    rounded.to_csv("assets\\examples_and_output\\all_data.csv", index=False)
-    return enriched
+    # Join HA-PWRBISQL23;master_dw.dbo.GENERAL_time to 'final' on the week_start date, which allows different tabs based on accounting year in the loaded excel file
+    final = pd.merge(left=stage_final, right=time, left_on="week_start", right_on="week_start", how="left")
 
-
-if __name__ == "__main__":
-    _ = main()
+    # Save
+    final.to_csv("assets\\examples_and_output\\all_data.csv", index=False)
