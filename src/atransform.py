@@ -193,40 +193,52 @@ def calc_fields(df: pd.DataFrame):
     Returns:
         pd.DataFrame: A further enriched DataFrame with calculated fields.
     """
-    df['cases/hr'] = df['cases'] / df['raw_labor_hours']
-    df['raw_labor_cost/case'] = df['raw_labor_cost'] / df['cases']
+    df['all_cases'] = df['cases'] + df['transfer_cases']
 
-    #                                                                               Multipliers per Brick 2025
+    # Recompute per-case rate from sums (correct way to roll up a rate)
+    df['sales_per_case'] = df['sales'] / df['all_cases']
+    df['cases/hr'] = df['all_cases'] / df['raw_labor_hours']
+    df['raw_labor_cost/case'] = df['raw_labor_cost'] / df['all_cases']
+
+    #                                                                               Multipliers per Brick 2025 - Mike Constantine has not updated for 2026
     df.loc[df['warehouse'] == 'LX', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.08
     df.loc[df['warehouse'] == 'WA', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.11
     df.loc[df['warehouse'] == 'JA', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.09
     df.loc[df['warehouse'] == 'ML', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.1
     df.loc[df['warehouse'] == 'SP', 'labor_cost_with_pto'] = df['raw_labor_cost'] * 1.06
-    # 1) Compute the weekly sum of PTO-loaded labor cost from non-TOTAL warehouses
+    
+    # Compute the weekly sum of PTO-loaded labor cost from non-TOTAL warehouses
     weekly_pto_sum = (
         df.loc[df['warehouse'] != 'TOTAL']
         .groupby('week_start', dropna=False)['labor_cost_with_pto']
         .sum()
     )
-    # 2) Assign that weekly total into each TOTAL row for its week
+    # Assign that weekly total into each TOTAL row for its week
     df.loc[df['warehouse'] == 'TOTAL', 'labor_cost_with_pto'] = (
         df.loc[df['warehouse'] == 'TOTAL', 'week_start'].map(weekly_pto_sum)
     )
 
+    # PTO Labor Cost/Case
+    df.loc[df['warehouse'] == 'LX', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['all_cases']
+    df.loc[df['warehouse'] == 'WA', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['all_cases']
+    df.loc[df['warehouse'] == 'JA', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['all_cases']
+    df.loc[df['warehouse'] == 'ML', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['all_cases']
+    df.loc[df['warehouse'] == 'SP', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['all_cases']
+    df.loc[df['warehouse'] == 'TOTAL', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['all_cases']
 
-
-    df.loc[df['warehouse'] == 'LX', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
-    df.loc[df['warehouse'] == 'WA', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
-    df.loc[df['warehouse'] == 'JA', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
-    df.loc[df['warehouse'] == 'ML', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
-    df.loc[df['warehouse'] == 'SP', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
-    df.loc[df['warehouse'] == 'TOTAL', 'labor_cost_with_pto/case'] = df['labor_cost_with_pto'] / df['cases']
-
-
-
-
+    # Loaded Labor Cost/Case
     df['loaded_labor_cost'] = df['labor_cost_with_pto'] * 1.45
-    df['loaded_labor_cost/case'] = df['loaded_labor_cost'] / df['cases']
+    df['loaded_labor_cost/case'] = df['loaded_labor_cost'] / df['all_cases']
+
+    # Re-order
+    df = df[[
+        "acc_year", "week_start", "warehouse",
+        "all_cases", "cases", "sales",
+        "raw_labor_hours", "cases/hr",
+        "raw_labor_cost", "raw_labor_cost/case", 
+        "labor_cost_with_pto", "labor_cost_with_pto/case",
+        "loaded_labor_cost", "loaded_labor_cost/case",
+    ]]
 
     return df
 
@@ -408,7 +420,47 @@ def integrate_transfer_cases(sales_cases: pd.DataFrame, transfer_cases: pd.DataF
     # week_start, warehouse, sales, cases, cost_per_case, transfer_cases
     return sales_with_transfer
 
+def add_warehouse_totals(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Append one 'TOTAL' row per week_start to the sales DataFrame.
+    Sums Sales and Cases, and recomputes cost_per_case from those sums.
+    """
+    if df.empty:
+        return df
+
+    # Work only from non-TOTAL rows to avoid double counting if re-run
+    base = df[df['warehouse'].str.upper() != 'TOTAL'].copy()
+
+    # "acc_year", "week_start", "warehouse",  # index
+    # "sales", "cases", "transfer_cases",     # sql data
+    # "raw_labor_cost", "raw_labor_hours",    # ukg api
+    # "raw_labor_cost/case_goal", "labor_cost_with_pto/case_goal", "loaded_labor_cost/case_goal"  # benchmarks per Ops team
+    totals = (
+        base.groupby(['acc_year', 'week_start'], as_index=False)
+            .agg({'sales'           : 'sum',
+                  'cases'           : 'sum',
+                  'transfer_cases'  : 'sum',
+                  'raw_labor_cost'  : 'sum',
+                  'raw_labor_hours' : 'sum'})
+    )
+    totals['warehouse'] = 'TOTAL'
+
+    # Same column order as input
+    cols = list(df.columns)
+    for col in ['sales', 'cases', 'warehouse', 'week_start']:
+        if col not in cols:
+            cols.append(col)
+
+    out = pd.concat([base, totals[cols]], ignore_index=True)
+    # Make sure types match (week_start is datetime in your pipeline)
+    if 'week_start' in out.columns:
+        out['week_start'] = pd.to_datetime(out['week_start'])
+    return out
+
 if __name__ == "__main__":
+    # ======================================================
+    # IMPORT
+    # ======================================================
     # Load sale/case and payroll info
     payroll = load_payroll_df(PAYROLL_PATH)
     monthly_KPIs = load_cost_per_case_df(KPI_PATH)
@@ -416,48 +468,67 @@ if __name__ == "__main__":
     time = pd.read_csv(TIME_PATH, parse_dates=["week_start"])    # Necessary for accounting time logic
     transfer_cases = pd.read_csv(TRANSFER_CASES_PATH, parse_dates=["sunday_saturdayweekstart"])
 
+    # ======================================================
+    # Handle KPIs
+    # ======================================================
+    # Expand monthly KPIs to weekly
+    # they're only by period because i didn't want to repeat the goal value for consecutive weeks with like goal values
+    # for example:
+    #   goal = .59 for weeks 1, 2, 3, 4, 5
+    #   goal = .56 for weeks 6, 7, 8, 9
+    #   goal = .52 for weeks 10, 11, 12, 13
+    # monthly_KPIs will only read .59 for week 1, .56 for week 6, .52 for week 10, etc 
+    weekly_KPIs = expand_monthly_kpis_to_weeks(monthly_KPIs)
+
+    # Keep rows where week_start is a 4-char year string (e.g., "2025") untouched
+    year_only_KPIs = weekly_KPIs[weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
+    # year_only_KPIs["week_start"] is not a valid date so
+
+    # Rows with real dates to expand
+    date_rows_KPIs = weekly_KPIs[~weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
+    date_rows_KPIs['week_start'] = pd.to_datetime(date_rows_KPIs['week_start'])
+
+    # ======================================================
+    # JOIN XFER CASES, PAYROLL ACTUALS, PAYROLL BENCHMARKS 
+    # ======================================================
     # Immediately add transfer cases to the sale/case data using special join logic
     sales_cases = integrate_transfer_cases(sales_cases=sales_cases, transfer_cases=transfer_cases)
 
-    # Expand monthly KPIs to weekly
-    weekly_KPIs = expand_monthly_kpis_to_weeks(monthly_KPIs)
-
-    # Add explicit weekly TOTAL rows before any merges
-    sales_cases = add_total_rows_for_sales(sales_cases)
-    payroll = add_total_rows_for_payroll(payroll)
-
     # Left join payroll KPI actuals to sales 
-    enriched = sales_cases.merge(
+    enriched1 = sales_cases.merge(
         payroll,
         how="left",
         on=["week_start", "warehouse"],
         validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
     )
 
-    #                   --- Drop key "2025", Merge on week_start and warehouse, (Then add 2025 KPIs back in - Not Implemented) ---
-    # Keep rows where week_start is a 4-char year string (e.g., "2025") untouched
-    year_only_KPIs = weekly_KPIs[weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
-
-    # Rows with real dates to expand
-    date_rows_KPIs = weekly_KPIs[~weekly_KPIs["week_start"].apply(lambda x: isinstance(x, str) and len(x) == 4)].copy()
-    date_rows_KPIs['week_start'] = pd.to_datetime(date_rows_KPIs['week_start'])
-
     # Left join payroll KPI benchmarks to previously enriched data
-    further_enriched = enriched.merge(
+    enriched2 = enriched1.merge(
         date_rows_KPIs,
         how="left",
         on=["week_start", "warehouse"],
         validate="m:1"  # each (week_start, warehouse) should map to at most one payroll row
     )
 
+    # Left join HA-PWRBISQL23;master_dw.dbo.GENERAL_time, allowing different tabs in the loaded excel file separated by accounting year 
+    enriched3 = pd.merge(left=enriched2, right=time, left_on="week_start", right_on="week_start", how="left")
+    enriched3 = enriched3[[   # reorder for clarity while debugging
+        "acc_year", "week_start", "warehouse",  # index
+        "sales", "cases", "transfer_cases",     # sql data
+        "raw_labor_cost", "raw_labor_hours",    # ukg api
+        #"raw_labor_cost/case_goal", "labor_cost_with_pto/case_goal", "loaded_labor_cost/case_goal"  # benchmarks per Ops team - currently omitting these due to Mike Constantine taking over for Brick and not entering goals
+    ]]
+
+    # ======================================================
+    # CALCULATED FIELDS
+    # ======================================================
+    enriched4 = add_warehouse_totals(enriched3) # Add explicit weekly TOTAL rows before any merges
+
     # Add calculated fields
-    further_further_enriched = calc_fields(further_enriched)
+    enriched5 = calc_fields(enriched4)
 
     # Round all numeric columns to 2 decimal places
-    stage_final = round_numeric_columns(further_further_enriched, decimals=6)
-
-    # Join HA-PWRBISQL23;master_dw.dbo.GENERAL_time to 'final' on the week_start date, which allows different tabs based on accounting year in the loaded excel file
-    final = pd.merge(left=stage_final, right=time, left_on="week_start", right_on="week_start", how="left")
+    rounded = round_numeric_columns(enriched5, decimals=6)
 
     # Save
-    final.to_csv("assets\\examples_and_output\\all_data.csv", index=False)
+    rounded.to_csv("assets\\examples_and_output\\aall_data.csv", index=False)
