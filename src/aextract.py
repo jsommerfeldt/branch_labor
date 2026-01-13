@@ -27,8 +27,8 @@ def get_recent_sunday(day_add_amt: int = 0) -> str:
 # Test get_recent_sunday()
 print(get_recent_sunday())
 print(get_recent_sunday(7).replace("-", ""))
-import time
-time.sleep(300)
+# import time
+# time.sleep(300)
 
 # Create DB connection
 try:
@@ -81,7 +81,7 @@ except Exception as e:
 # Accounting Calendar
 try:
     query = f"""
-    SELECT DISTINCT acc_year, week_start
+    SELECT DISTINCT acc_year, week_start, acc_week_number
     FROM master_dw.dbo.GENERAL_time
     WHERE week_day_number = 1;
     """

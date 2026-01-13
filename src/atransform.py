@@ -303,7 +303,8 @@ def round_numeric_columns(df: pd.DataFrame, decimals: int = 2) -> pd.DataFrame:
         pd.DataFrame: A new DataFrame with rounded numeric columns.
     """
     numeric_cols = df.select_dtypes(include=["number"]).columns
-    df[numeric_cols] = df[numeric_cols].round(decimals)
+    # df[numeric_cols] = df[numeric_cols].round(decimals)
+    df.loc[:, numeric_cols] = df[numeric_cols].round(decimals)
     return df
 
 def add_total_rows_for_sales(sales_df: pd.DataFrame) -> pd.DataFrame:
@@ -527,8 +528,14 @@ if __name__ == "__main__":
     # Add calculated fields
     enriched5 = calc_fields(enriched4)
 
+    # ======================================================
+    # CLEAN
+    # ======================================================
     # Round all numeric columns to 2 decimal places
     rounded = round_numeric_columns(enriched5, decimals=6)
+
+    # SP -> HA
+    rounded.loc[:, "warehouse"] = rounded["warehouse"].replace('SP', 'HA')
 
     # Save
     rounded.to_csv("assets\\examples_and_output\\aall_data.csv", index=False)
