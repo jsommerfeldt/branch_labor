@@ -124,7 +124,7 @@ def apply_precision_by_sheet(ws, headers, is_total_sheet: bool, header_row: int 
         fmt_goal = '"$"#,##0.0000'
     else:
         fmt_actual = '"$"#,##0.000'
-        fmt_goal = '"$"#,##0.00'
+        fmt_goal = '"$"#,##0.000'
 
     last_row = ws.max_row
     data_start = header_row + 1
@@ -454,7 +454,7 @@ def scale_goals_by_sales_ratio(df_year: pd.DataFrame) -> pd.DataFrame:
 
     return df_year
 
-def recompute_total_weekly_goals(df_year: pd.DataFrame) -> pd.DataFrame:
+def recompute_total_weekly_goals(df_year: pd.DataFrame, weight_col: str) -> pd.DataFrame:
     """
     Recompute weekly goals for TOTAL rows as a cases-weighted average across non-TOTAL warehouses
     for each goal column. Uses 'cases' (Sale Cases) for weighting and TOTAL week's cases as denominator.
@@ -469,12 +469,12 @@ def recompute_total_weekly_goals(df_year: pd.DataFrame) -> pd.DataFrame:
 
     # TOTAL denominator: TOTAL "cases" by week
     total_cases_by_week = (
-        df_year.loc[wh_upper == "TOTAL"].set_index("week_start")["cases"]
+        df_year.loc[wh_upper == "TOTAL"].set_index("week_start")[weight_col]
     )
 
     for gc in goal_cols:
         # Numerator: sum(Cases * goal) across non-TOTAL warehouses for that week
-        weighted = df_year.loc[non_total_mask, "cases"] * df_year.loc[non_total_mask, gc]
+        weighted = df_year.loc[non_total_mask, weight_col] * df_year.loc[non_total_mask, gc]
         numerator_by_week = weighted.groupby(df_year.loc[non_total_mask, "week_start"]).sum(min_count=1)
 
         denom = total_cases_by_week.reindex(numerator_by_week.index)
@@ -744,30 +744,24 @@ def build_workbooks(df: pd.DataFrame) -> None:
         if not acc_year_str:
             continue
 
-        # --- Inject goals per year ---
+        # --- Inject and recompute goals per year ---
         if acc_year_str == "2025":
             df_year = inject_2025_goals(df_year, acc_year_str, KPI_GOALS_PATH)
+            df_year = recompute_total_weekly_goals(df_year=df_year, weight_col="cases")
+            df_year = scale_goals_by_sales_ratio(df_year) # weekly goals to a total-case basis
         elif acc_year_str == "2026":
             df_year = inject_2026_goals_from_2025_actuals(df_year, df_2025_all)
+            df_year = recompute_total_weekly_goals(df_year=df_year, weight_col="all_cases")
 
-        # --- Recompute TOTAL weekly goals (cases-weighted average across warehouses) ---
-        df_year = recompute_total_weekly_goals(df_year)
-
-        # --- NEW: Convert weekly goals to a total-case basis for 2025 ---
-        if acc_year_str == "2025":
-            df_year = scale_goals_by_sales_ratio(df_year)
-
-        # Continue with your existing workbook creation
+        # Continue with workbook creation
         out_path = OUTPUT_DIR / f"wh_sales_cases_by_warehouse_{acc_year_str}.xlsx"
         wb = Workbook()
         # Remove default sheet
         if "Sheet" in wb.sheetnames:
             wb.remove(wb["Sheet"])
 
-        # Normalize warehouse sheet names (SP->HA) for tab naming only
-        df_year = df_year.copy()
-
         # One sheet per warehouse
+        df_year = df_year.copy()
         warehouses = sorted(df_year["warehouse"].unique().tolist())
         sheet_names = dedupe_sheet_names(warehouses)
         wh_to_sheet = dict(zip(warehouses, sheet_names))

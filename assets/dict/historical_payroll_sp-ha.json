@@ -1164,5 +1164,27 @@
       "raw_labor_cost": "25383",
       "raw_labor_hours": "1065"
     }
+  },
+  "2026-01-04": {
+    "JA": {
+      "raw_labor_cost": "12943",
+      "raw_labor_hours": "562"
+    },
+    "LX": {
+      "raw_labor_cost": "23353",
+      "raw_labor_hours": "1006"
+    },
+    "ML": {
+      "raw_labor_cost": "27387",
+      "raw_labor_hours": "1339"
+    },
+    "HA": {
+      "raw_labor_cost": "66253",
+      "raw_labor_hours": "2949"
+    },
+    "WA": {
+      "raw_labor_cost": "29428",
+      "raw_labor_hours": "1198"
+    }
   }
 }

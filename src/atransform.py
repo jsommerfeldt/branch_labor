@@ -531,10 +531,10 @@ if __name__ == "__main__":
     # ======================================================
     # CLEAN
     # ======================================================
-    # Round all numeric columns to 2 decimal places
+    # Round all numeric columns
     rounded = round_numeric_columns(enriched5, decimals=6)
 
-    # SP -> HA
+    # Warehouse: SP -> HA
     rounded.loc[:, "warehouse"] = rounded["warehouse"].replace('SP', 'HA')
 
     # Save
