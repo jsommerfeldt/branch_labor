@@ -314,7 +314,6 @@ CSV_TO_HEADER = {
     "loaded_labor_cost": "Loaded Labor Cost ($)",
     "loaded_labor_cost/case": "Loaded Labor Cost/Case ($)",
     "loaded_labor_cost/case_goal": "Loaded Labor Cost/Case Goal ($)",
-
 }
 
 
@@ -648,6 +647,18 @@ def load_csv() -> pd.DataFrame:
     df = df[(df["acc_year"] != "") & (df["warehouse"] != "")]
     return df
 
+def hide_column_by_header(ws, headers, header_name: str = "Total Cases") -> None:
+    """
+    Hide a column by its header text if present in 'headers'.
+    No-op if the header isn't found.
+    """
+    try:
+        col_idx = headers.index(header_name) + 1  # 1-based index for Excel
+    except ValueError:
+        return  # header not present on this sheet
+
+    col_letter = get_column_letter(col_idx)
+    ws.column_dimensions[col_letter].hidden = True
 
 def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
     """
@@ -680,7 +691,7 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
 
 
     # Optional: append a computed YTD row (cases-weighted goal averages) when enabled (NEW)
-    if APPEND_STYLED_YTD_ROW:  # NOTE: ensure the variable name exactly matches your config (APPEND_STYLED_YTD_ROW)
+    if APPEND_STYLED_YTD_ROW:
         # Compute weighted goals using the data in 'group'
         def weighted_goal(col_csv: str):
             # Filter rows where both cases and goal are present
@@ -730,6 +741,9 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
 
     # Autosize columns
     autosize_columns(ws)
+
+    # --- Hide "Total Cases" AFTER all formatting and autosizing ---
+    hide_column_by_header(ws, headers, header_name="Total Cases")
 
 
 def build_workbooks(df: pd.DataFrame) -> None:
