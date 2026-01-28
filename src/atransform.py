@@ -193,7 +193,7 @@ def calc_fields(df: pd.DataFrame):
     Returns:
         pd.DataFrame: A further enriched DataFrame with calculated fields.
     """
-    df['all_cases'] = df['cases'].fillna(0) + df['transfer_cases'].fillna(0)
+    df['all_cases'] = df['cases'].fillna(0)# + df['transfer_cases'].fillna(0)
 
     # Recompute per-case rate from sums (correct way to roll up a rate)
     df['sales_per_case'] = df['sales'] / df['all_cases']

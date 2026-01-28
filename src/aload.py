@@ -694,6 +694,42 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
 
     # Optional: append a computed YTD row (cases-weighted goal averages) when enabled (NEW)
     if APPEND_STYLED_YTD_ROW:
+        # --- Helpers for YTD sums + derived KPIs ---
+        def _num_series(col_csv: str) -> pd.Series:
+            """
+            Return a numeric pandas Series for a CSV column in `group`, or an empty numeric series if missing.
+            """
+            if col_csv not in group.columns:
+                return pd.Series(dtype="float64")
+            return pd.to_numeric(group[col_csv], errors="coerce")
+
+        def _safe_sum(col_csv: str) -> float:
+            """
+            Sum a numeric CSV column safely. Returns np.nan if column missing or sum is NaN.
+            """
+            s = _num_series(col_csv).sum()
+            return float(s) if pd.notna(s) else np.nan
+
+        def _safe_div(n: float, d: float) -> float:
+            """
+            Safe divide: returns np.nan if numerator/denominator invalid or denominator is zero.
+            """
+            if n is None or pd.isna(n):
+                return np.nan
+            if d is None or pd.isna(d) or d == 0:
+                return np.nan
+            return float(n) / float(d)
+
+        def _set_if_header_exists(header_name: str, value):
+            """
+            Write value into ytd_values only if the header exists on this sheet.
+            Converts np.nan to None so Excel shows blanks.
+            """
+            if header_name in headers:
+                if isinstance(value, (float, np.floating)) and np.isnan(value):
+                    value = None
+                ytd_values[headers.index(header_name)] = value
+
         # Compute weighted goals using the data in 'group'
         def weighted_goal(col_csv: str):
             # Filter rows where both cases and goal are present
@@ -705,6 +741,7 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
                 return np.nan
             return (valid["all_cases"] * valid[col_csv]).sum() / denom
 
+        # ------------------ LOGIC ------------------ 
         # Build a YTD row aligned to current headers
         ytd_values = [None] * len(headers)
         # Label columns
@@ -724,6 +761,59 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
             if header_name in headers:
                 val = weighted_goal(csv_col)
                 ytd_values[headers.index(header_name)] = val
+
+        # --- YTD SUM columns (additive) ---
+        #   - Total Cases
+        #   - Sale Cases
+        #   - Sales ($)
+        #   - Raw Labor Hours
+        #   - Raw Labor Cost ($)
+        #   - Labor Cost w/ PTO ($)
+        #   - Loaded Labor Cost ($)
+        # CSV columns -> Excel header names (these headers exist in your workbook layout)
+        sum_map = {
+            "all_cases": "Total Cases",
+            "cases": "Sale Cases",
+            "sales": "Sales ($)",
+            "raw_labor_hours": "Raw Labor Hours",
+            "raw_labor_cost": "Raw Labor Cost ($)",
+            "labor_cost_with_pto": "Labor Cost w/ PTO ($)",
+            "loaded_labor_cost": "Loaded Labor Cost ($)",
+        }
+        # Compute YTD totals once (we'll reuse them for derived KPIs)
+        ytd_totals = {}
+        for csv_col, header_name in sum_map.items():
+            ytd_totals[csv_col] = _safe_sum(csv_col)
+            _set_if_header_exists(header_name, ytd_totals[csv_col])
+
+        # --- YTD Derived KPI columns (recomputed ratios, NOT summed) ---
+        #   - Sales/Case ($) = Sales ($) / Total Cases
+        #   - Sales/Case ($) = Total Cases / Raw Labor Hours
+        #   - Sales/Case ($) = Raw Labor Cost ($) / Total Cases
+        #   - Sales/Case ($) = Labor Cost w/ PTO ($) / Total Cases
+        #   - Sales/Case ($) = Loaded Labor Cost ($) / Total Cases
+        # Pull totals out for readability
+        ytd_all_cases   = ytd_totals.get("all_cases", np.nan)
+        ytd_sales       = ytd_totals.get("sales", np.nan)
+        ytd_hours       = ytd_totals.get("raw_labor_hours", np.nan)
+        ytd_raw_cost    = ytd_totals.get("raw_labor_cost", np.nan)
+        ytd_pto_cost    = ytd_totals.get("labor_cost_with_pto", np.nan)
+        ytd_loaded_cost = ytd_totals.get("loaded_labor_cost", np.nan)
+
+        # Sales/Case ($) = Sales ($) / Total Cases
+        _set_if_header_exists("Sales/Case ($)", _safe_div(ytd_sales, ytd_all_cases))
+
+        # Cases/Hr = Total Cases / Raw Labor Hours
+        _set_if_header_exists("Cases/Hr", _safe_div(ytd_all_cases, ytd_hours))
+
+        # Raw Labor Cost/Case ($) = Raw Labor Cost ($) / Total Cases
+        _set_if_header_exists("Raw Labor Cost/Case ($)", _safe_div(ytd_raw_cost, ytd_all_cases))
+
+        # Labor Cost w/ PTO/Case ($) = Labor Cost w/ PTO ($) / Total Cases
+        _set_if_header_exists("Labor Cost w/ PTO/Case ($)", _safe_div(ytd_pto_cost, ytd_all_cases))
+
+        # Loaded Labor Cost/Case ($) = Loaded Labor Cost ($) / Total Cases
+        _set_if_header_exists("Loaded Labor Cost/Case ($)", _safe_div(ytd_loaded_cost, ytd_all_cases))
 
         ws.append(ytd_values)
         # Style the YTD row (thick border + bold)
@@ -745,7 +835,7 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
     autosize_columns(ws)
 
     # --- Hide "Total Cases" AFTER all formatting and autosizing ---
-    #hide_column_by_header(ws, headers, header_name="Total Cases")
+    hide_column_by_header(ws, headers, header_name="Sale Cases")
 
 
 def build_workbooks(df: pd.DataFrame) -> None:
