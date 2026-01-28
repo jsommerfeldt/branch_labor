@@ -233,7 +233,7 @@ def calc_fields(df: pd.DataFrame):
     # Re-order
     df = df[[
         "acc_year", "week_start", "warehouse",
-        "all_cases", "cases", "sales",
+        "all_cases", "cases", "sales", "sales_per_case",
         "raw_labor_hours", "cases/hr",
         "raw_labor_cost", "raw_labor_cost/case", 
         "labor_cost_with_pto", "labor_cost_with_pto/case",

@@ -282,6 +282,7 @@ PREFERRED_HEADERS = [
     "Total Cases",
     "Sale Cases",
     "Sales ($)",
+    "Sales/Case ($)",
     "Raw Labor Hours",
     "Cases/Hr",
     "Raw Labor Cost ($)",
@@ -303,6 +304,7 @@ CSV_TO_HEADER = {
     "all_cases": "Total Cases",
     "cases": "Sale Cases",
     "sales": "Sales ($)",
+    "sales_per_case": "Sales/Case ($)",
     "raw_labor_hours": "Raw Labor Hours",
     "cases/hr": "Cases/Hr",
     "raw_labor_cost": "Raw Labor Cost ($)",
@@ -743,7 +745,7 @@ def write_styled_sheet(ws, group: pd.DataFrame, sheet_name: str) -> None:
     autosize_columns(ws)
 
     # --- Hide "Total Cases" AFTER all formatting and autosizing ---
-    hide_column_by_header(ws, headers, header_name="Total Cases")
+    #hide_column_by_header(ws, headers, header_name="Total Cases")
 
 
 def build_workbooks(df: pd.DataFrame) -> None:
